@@ -1,0 +1,39 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install UV
+        run: pip install uv
+
+      - name: Install dependencies
+        run: | # Le symbole | signifie :"Ce run contient plusieurs lignes"
+          cd backend
+          uv sync
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          uv run pytest -v --cov
+############################################################################################
+#                          Différence uses et run :
+# - uses = utiliser une action GitHub existante (une action est un module déjà prêt)
+# - run = exécuter une commande shell dans le workflow (comme si on tapait dans le terminal)
+######################################################################################################
