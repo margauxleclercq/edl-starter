@@ -130,7 +130,22 @@ def test_delete_task(client):
     Astuce : Regardez test_get_task_by_id pour voir comment créer et obtenir l'ID
     """
     # TODO : Écrivez votre test ici !
-    pass
+    # créer une tâche et récupérer son id
+    new_task = {"title": "A supprimer", "description": "temp"}
+    create_res = client.post("/tasks", json=new_task)
+    assert create_res.status_code == 201
+    task_id = create_res.json()["id"]
+
+    #  supprimer la tâche
+    delete_res = client.delete(f"/tasks/{task_id}")
+    assert delete_res.status_code == 204
+
+    # la tâche n'existe plus (GET -> 404)
+    get_res = client.get(f"/tasks/{task_id}")
+    assert get_res.status_code == 404
+
+    
+
 
 
 # EXERCICE 2 : Écrire un test pour METTRE À JOUR une tâche
@@ -149,7 +164,41 @@ def test_update_task(client):
     Astuce : Les requêtes PUT sont comme les POST, mais elles modifient des données existantes
     """
     # TODO : Écrivez votre test ici !
-    pass
+    """
+    Teste la mise à jour (PUT) d'une tâche existante.
+    """
+
+    # créer une tâche initiale
+    task_data = {"title": "Titre Original", "description": "Description initiale"}
+    create_res = client.post("/tasks", json=task_data)
+    assert create_res.status_code == 201
+
+    # récupérer l'ID de la tâche créée
+    task_id = create_res.json()["id"]
+
+    # mettre à jour le titre via PUT
+    update_data = {"title": "Nouveau Titre"}
+    update_res = client.put(f"/tasks/{task_id}", json=update_data)
+
+    #  vérifier que la mise à jour a fonctionné
+    assert update_res.status_code == 200
+    updated_task = update_res.json()
+    assert updated_task["title"] == "Nouveau Titre"
+
+    # Vérifier aussi que le reste des données n’a pas été écrasé
+    assert updated_task["description"] == "Description initiale"
+ 
+def test_delete_nonexistent_task_returns_404(client):
+    """Deleting a task that doesn't exist should return 404."""
+    # 1. Essayer de supprimer une tâche avec un ID inexistant
+    response = client.delete("/tasks/9999")
+
+    # 2. Vérifier que ça retourne 404
+    assert response.status_code == 404
+
+    # 3. Vérifier que le message d'erreur contient "not found"
+    data = response.json()
+    assert "not found" in data["detail"].lower()
 
 
 # EXERCICE 3 : Tester la validation - un titre vide devrait échouer
@@ -180,7 +229,22 @@ def test_update_task_with_invalid_priority(client):
     Rappel : Les priorités valides sont "low", "medium", "high" (voir TaskPriority dans app.py)
     """
     # TODO : Écrivez votre test ici !
-    pass
+    # Créer une tâche valide
+    new_task = {"title": "Tâche test", "priority": "medium"}
+    create_res = client.post("/tasks", json=new_task)
+    assert create_res.status_code == 201
+    task_id = create_res.json()["id"]
+
+    # Essayer de la mettre à jour avec une priorité invalide
+    invalid_update = {"priority": "urgent"}  # "urgent" n'existe pas dans l'enum
+    update_res = client.put(f"/tasks/{task_id}", json=invalid_update)
+
+    # Vérifier que ça retourne une erreur 422 (validation)
+    assert update_res.status_code == 422
+
+    # on peut aussi vérifier le message d'erreur
+    detail = update_res.json()
+    assert "priority" in str(detail).lower()
 
 
 # EXERCICE 5 : Tester l'erreur 404
@@ -195,7 +259,38 @@ def test_get_nonexistent_task(client):
     # TODO : Écrivez votre test ici !
     pass
 
+def test_filter_by_multiple_criteria(client):
+    """Filtering by status AND priority should work."""
+    # Créer 3 tâches avec des statuts et priorités différents
+    tasks = [
+        {"title": "Task 1", "status": "todo", "priority": "high"},
+        {"title": "Task 2", "status": "done", "priority": "low"},
+        {"title": "Task 3", "status": "todo", "priority": "medium"},
+    ]
+    for task in tasks:
+        res = client.post("/tasks", json=task)
+        assert res.status_code == 201
 
+    # Filtrer avec les critères : status=todo et priority=high
+    filter_res = client.get("/tasks?status=todo&priority=high")
+    assert filter_res.status_code == 200
+
+    # Vérifier qu'on reçoit uniquement la tâche correspondante
+    data = filter_res.json()
+    #Vu la sortie de get dans app.py (une Liste de Task), data correspond à une liste de tâche
+    #Ici une seule tâche doit être introduite dans la Liste 
+    #Et on va rechercher les informations correspondant à cette tâche dans le premier élément de la liste qui est de type Task et donc possède plusieurs champs (title, description, status, priority,...)
+    assert len(data) == 1  # une seule tâche doit correspondre
+    assert data[0]["title"] == "Task 1"
+    assert data[0]["status"] == "todo"
+    assert data[0]["priority"] == "high"
+
+
+
+def test_health_check(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "BROKEN"  # ❌ Faux exprès !
 # =============================================================================
 # EXERCICES BONUS (Si vous finissez en avance !)
 # =============================================================================
