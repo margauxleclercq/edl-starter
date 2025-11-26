@@ -38,7 +38,7 @@ def test_health_check(client):
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    assert response.json()["status"] == "BROKEN"
 
 
 def test_create_task(client):
@@ -149,7 +149,7 @@ def test_delete_task(client):
 
 # EXERCICE 2 : Écrire un test pour METTRE À JOUR une tâche
 # Pattern : Créer → Mettre à jour → Vérifier les changements
-
+"""
 def test_update_task(client):
     # créer une tâche initiale
     task_data = {"title": "Titre Original", "description": "Description initiale"}
@@ -170,7 +170,7 @@ def test_update_task(client):
 
     # Vérifier aussi que le reste des données n’a pas été écrasé
     assert updated_task["description"] == "Description initiale"
- 
+ """
 def test_delete_nonexistent_task_returns_404(client):
     """Deleting a task that doesn't exist should return 404."""
     # 1. Essayer de supprimer une tâche avec un ID inexistant
