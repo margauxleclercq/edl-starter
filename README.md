@@ -2,6 +2,8 @@
 
 Bienvenue dans le code de démarrage pour les ateliers d'Environnement de Développement Logiciel (EDL) !
 
+blabla
+
 ## 📦 Contenu
 
 Ce starter contient une application **TaskFlow** complète avec :
