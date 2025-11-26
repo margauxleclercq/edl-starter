@@ -166,7 +166,7 @@ def test_update_task(client):
     """
     Teste la mise à jour (PUT) d'une tâche existante.
     """
-
+    pass
     # créer une tâche initiale
     task_data = {"title": "Titre Original", "description": "Description initiale"}
     create_res = client.post("/tasks", json=task_data)
