@@ -145,7 +145,10 @@ def test_delete_task(client):
     assert get_res.status_code == 404
 
     
-
+def test_health_check(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "BROKEN"  # ❌ Faux exprès !
 
 
 # EXERCICE 2 : Écrire un test pour METTRE À JOUR une tâche
@@ -287,10 +290,7 @@ def test_filter_by_multiple_criteria(client):
 
 
 
-def test_health_check(client):
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json()["status"] == "BROKEN"  # ❌ Faux exprès !
+
 # =============================================================================
 # EXERCICES BONUS (Si vous finissez en avance !)
 # =============================================================================
