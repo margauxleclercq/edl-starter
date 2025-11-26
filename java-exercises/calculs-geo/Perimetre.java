@@ -18,6 +18,6 @@ public class Perimetre {
     public static int perim(int a, int b, int c) {
         // TODO: Calculer somme avec Addition.add(a, b)
         // TODO: Multiplier par c avec Produit.mult(somme, c)
-        return 0;
+        return Produit.mult(Addition.add(a,b),c);
     }
 }

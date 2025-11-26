@@ -37,6 +37,10 @@ public class Money {
         // TODO: Vérifier si this.currency().equals(m.currency())
         // TODO: Si oui, retourner new Money(this.amount() + m.amount(), this.currency())
         // TODO: Si non, throw new Exception("Not Same currency")
-        return null;
+        if (this.currency().equals(m.currency())) {
+        return new Money(this.amount() + m.amount(), this.currency());
+        }
+        throw new Exception("Not Same currency");
+        
     }
 }

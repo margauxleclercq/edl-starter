@@ -54,7 +54,10 @@ class TaskUpdate(BaseModel):
     """Model for updating a task - all fields optional for partial updates."""
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    status: Optional[TaskStatus] = None
+    status: Optional[TaskStatus] = None 
+    #Pq pas de Field ici :
+    #ni de default = TaskStatus.TODO → car on NE veut PAS écraser l'ancien statut
+    #ni de Field(...) → car il n’y a aucune validation spéciale (exemple : la description ne peut pas dépasser 1000 caractères), seulement la validation automatique de Pydantic
     priority: Optional[TaskPriority] = None
     assignee: Optional[str] = Field(None, max_length=100)
     due_date: Optional[datetime] = None
@@ -234,7 +237,41 @@ async def update_task(task_id: int, updates: TaskUpdate) -> Task:
     Indice: Regardez comment create_task fonctionne pour vous inspirer
     """
     # TODO: Votre code ici
-    raise HTTPException(status_code=501, detail="Update not implemented yet - complete this function!")
+    #1) vérifier que la tâche existe dans tasks_db sinon renvoyer une erreur 404
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    
+    #2) Récupérer la tâche existante
+    existing = tasks_db[task_id]
+    #3)Extraire les champs à mettre à jour avec updates.model_dump(exclude_unset=True)
+    update_data = updates.model_dump(exclude_unset=True)
+    #4)Valider le titre s'il est fourni (ne doit pas être vide)
+    #Si un champ de type "title" existe dans update_data mais qu'il vide alors il faut lever l'exception 
+    if "title" in update_data and (not update_data["title"] or not update_data["title"].strip()):
+        raise HTTPException(status_code=422, detail="Title cannot be empty")
+    #5)créer une nouvelle task
+    now = datetime.utcnow()
+
+    #Utilisez update_data.get("field", existing_task.field) pour garder les anciennes valeurs si non mises à jour
+    updated = Task(
+        id=existing.id,
+        title=update_data.get("title", existing.title), 
+        description=update_data.get("description", existing.description),
+        status=update_data.get("status", existing.status),
+        priority=update_data.get("priority", existing.priority),
+        assignee=update_data.get("assignee", existing.assignee),
+        due_date=update_data.get("due_date", existing.due_date),
+        created_at=existing.created_at,
+        updated_at=now,
+    )
+
+    
+        # 6) enregistrer
+    tasks_db[task_id] = updated
+
+    # 7) retourner
+    return updated
+
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
@@ -258,7 +295,7 @@ async def delete_task(task_id: int):
     if task_id not in tasks_db:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
 
-    del tasks_db[task_id]
+    del tasks_db[task_id] #del ... = la manière Python de faire une suppression dans un dict.
     return None
 
 if __name__ == "__main__":
